@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: mcp-ts
+metadata:
+    template: azd-init@1.17.2
+services:
+    mcp-ts:
+        project: .
+        host: containerapp
+        language: js
+resources:
+    mcp-ts:
+        type: host.containerapp
+        port: 80
