@@ -8,7 +8,5 @@ services:
         project: .
         host: containerapp
         language: js
-resources:
-    mcp-ts:
-        type: host.containerapp
-        port: 80
+    docker:
+      path: Dockerfile
