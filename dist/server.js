@@ -6,19 +6,17 @@ const server = new McpServer({
     name: "mcp-streamable-http",
     version: "1.0.0",
 });
-// ServiceNow API configuration (replace with your instance and credentials)
+// ServiceNow API configuration (replace with your instance if needed)
 const SERVICENOW_INSTANCE = "https://accentureabdemo2.service-now.com";
-const SERVICENOW_USER = "prerana.polekar";
-const SERVICENOW_PASS = "Prenow@2024";
 // Helper for ServiceNow API requests
-async function serviceNowRequest(path, query = {}) {
+async function serviceNowRequest(path, query = {}, username, password) {
     const url = new URL(`${SERVICENOW_INSTANCE}${path}`);
     Object.entries(query).forEach(([k, v]) => url.searchParams.append(k, v));
     const response = await fetch(url.toString(), {
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": "Basic " + Buffer.from(`${SERVICENOW_USER}:${SERVICENOW_PASS}`).toString("base64"),
+            "Authorization": "Basic " + Buffer.from(`${username}:${password}`).toString("base64"),
         },
     });
     if (!response.ok) {
@@ -27,8 +25,11 @@ async function serviceNowRequest(path, query = {}) {
     return response.json();
 }
 // Tool: List Incidents
-const listIncidents = server.tool("list-incidents", "List ServiceNow incidents", async () => {
-    const data = await serviceNowRequest("/api/now/table/incident", { sysparm_limit: "5" });
+const listIncidents = server.tool("list-incidents", "List ServiceNow incidents", {
+    username: z.string().describe("Your ServiceNow username"),
+    password: z.string().describe("Your ServiceNow password"),
+}, async (params) => {
+    const data = await serviceNowRequest("/api/now/table/incident", { sysparm_limit: "5" }, params.username, params.password);
     return {
         content: [
             {
@@ -41,11 +42,13 @@ const listIncidents = server.tool("list-incidents", "List ServiceNow incidents",
 // Tool: Get Incident by Number
 const getIncidentByNumber = server.tool("get-incident-by-number", "Get a ServiceNow incident by number", {
     number: z.string().describe("Incident number, e.g. INC0010001"),
+    username: z.string().describe("Your ServiceNow username"),
+    password: z.string().describe("Your ServiceNow password"),
 }, async (params) => {
     const data = await serviceNowRequest("/api/now/table/incident", {
         number: params.number,
         sysparm_limit: "1",
-    });
+    }, params.username, params.password);
     if (!data.result.length) {
         return { content: [{ type: "text", text: "Incident not found." }] };
     }
@@ -62,11 +65,13 @@ const getIncidentByNumber = server.tool("get-incident-by-number", "Get a Service
 // Tool: Search Knowledge Articles
 const searchKnowledge = server.tool("search-knowledge", "Search ServiceNow knowledge articles by keyword", {
     keyword: z.string().describe("Keyword to search in knowledge articles"),
+    username: z.string().describe("Your ServiceNow username"),
+    password: z.string().describe("Your ServiceNow password"),
 }, async (params) => {
     const data = await serviceNowRequest("/api/now/table/kb_knowledge", {
         text: params.keyword,
         sysparm_limit: "5",
-    });
+    }, params.username, params.password);
     if (!data.result.length) {
         return { content: [{ type: "text", text: "No articles found." }] };
     }
